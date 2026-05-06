@@ -162,6 +162,72 @@
       display: none;
     }
 
+    /* ── Switcher divider ── */
+    .switcher-divider {
+      width: 1px;
+      height: 32px;
+      background: var(--border);
+      margin: 0 20px;
+      flex-shrink: 0;
+    }
+
+    /* ── Audio toggle button ── */
+    .audio-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      transition: color 0.2s, background 0.2s, border-color 0.2s;
+      outline: none;
+      white-space: nowrap;
+    }
+
+    .audio-btn:hover {
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+    }
+
+    .audio-btn.playing {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border-color: rgba(232, 200, 74, 0.35);
+    }
+
+    .audio-btn .audio-icon {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .audio-btn .bar {
+      display: inline-block;
+      width: 3px;
+      border-radius: 2px;
+      background: currentColor;
+      transition: height 0.2s;
+    }
+
+    .audio-btn.playing .bar:nth-child(1) { animation: eq 0.8s ease-in-out infinite alternate; height: 10px; }
+    .audio-btn.playing .bar:nth-child(2) { animation: eq 0.6s ease-in-out infinite alternate 0.15s; height: 14px; }
+    .audio-btn.playing .bar:nth-child(3) { animation: eq 0.9s ease-in-out infinite alternate 0.05s; height: 8px; }
+
+    .audio-btn:not(.playing) .bar { height: 4px; }
+
+    @keyframes eq {
+      from { transform: scaleY(0.4); }
+      to   { transform: scaleY(1); }
+    }
+
     /* indicator dot */
     .dot {
       display: inline-block;
@@ -193,7 +259,7 @@
   <!-- 3D model viewer -->
   <model-viewer
     id="viewer"
-    src="./steamp_updated.glb"
+    src="./steamp_materials_right.glb"
     ar
     ar-scale="fixed"
     camera-controls
@@ -215,6 +281,17 @@
       <button class="model-btn active" id="btn-a" onclick="switchModel('a')">Model A</button>
       <button class="model-btn" id="btn-b" onclick="switchModel('b')">Model B</button>
     </div>
+
+    <div class="switcher-divider"></div>
+
+    <button class="audio-btn playing" id="audio-btn" onclick="toggleAudio()">
+      <span class="audio-icon">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </span>
+      <span id="audio-label">Sound On</span>
+    </button>
   </div>
 
   <audio controls autoplay loop>
@@ -236,6 +313,24 @@
     // ────────────────────────────────────────────────────────────────
 
     let current = 'a';
+
+    // ── Audio toggle ─────────────────────────────────────────────────
+    const audioEl  = document.querySelector('audio');
+    const audioBtn = document.getElementById('audio-btn');
+    const audioLbl = document.getElementById('audio-label');
+
+    function toggleAudio() {
+      if (audioEl.paused) {
+        audioEl.play();
+        audioBtn.classList.add('playing');
+        audioLbl.textContent = 'Sound On';
+      } else {
+        audioEl.pause();
+        audioBtn.classList.remove('playing');
+        audioLbl.textContent = 'Sound Off';
+      }
+    }
+    // ────────────────────────────────────────────────────────────────
 
     function switchModel(key) {
       if (key === current) return;
