@@ -2,42 +2,269 @@
 
 <head>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;500;700&display=swap');
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --border: #2a2a2a;
+      --accent: #e8c84a;
+      --accent-dim: rgba(232, 200, 74, 0.15);
+      --text: #f0ede6;
+      --text-muted: #888;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       margin: 0;
+      background: var(--bg);
+      font-family: 'Barlow', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
+    /* ── Top bar ── */
+    .top-bar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 56px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .top-bar .label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .top-bar .model-name {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: 0.04em;
+      transition: opacity 0.3s;
+    }
+
+    /* ── Viewer ── */
     model-viewer {
+      flex: 1;
       width: 100%;
-      height: 100%
+      background: transparent;
     }
 
+    /* ── AR button (original slot) ── */
     button[slot=ar-button] {
       background-color: white;
       border-radius: 4px;
       border: none;
       position: absolute;
       top: 32px;
-      font-size: 1.5em;
+      right: 16px;
+      font-size: 1em;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-family: 'Barlow', sans-serif;
+      font-weight: 500;
+    }
+
+    /* ── Bottom switcher ── */
+    .switcher {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 14px 24px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .switcher-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-right: 18px;
+      white-space: nowrap;
+    }
+
+    .switcher-track {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .model-btn {
+      position: relative;
+      padding: 9px 28px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      transition: color 0.2s, background 0.2s;
+      outline: none;
+    }
+
+    .model-btn:not(:last-child) {
+      border-right: 1px solid var(--border);
+    }
+
+    .model-btn.active {
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .model-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent);
+    }
+
+    .model-btn:hover:not(.active) {
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+    }
+
+    /* loading flash */
+    .model-btn.loading {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    /* ── Audio ── */
+    audio {
+      display: none;
+    }
+
+    /* indicator dot */
+    .dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-right: 8px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
     }
   </style>
-
 </head>
 
 <body>
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.2.0/model-viewer.min.js"></script>
 
-  <model-viewer src="./steamp_updated.glb" ar ar-scale="fixed" camera-controls touch-action="pan-y" alt="Steamp"
-    shadow-intensity="2" skybox-image="./belfast_open_field_1k.hdr" skybox-height="1.7m" autoplay
-    max-camera-orbit="auto 90deg auto" xr-environment>
-    <button slot="ar-button">
-      <div class="ar-button-content">Viev in AR</div>
-    </button>
+  <!-- Top bar -->
+  <div class="top-bar">
+    <span class="label">3D Viewer</span>
+    <span class="model-name" id="currentModelName"><span class="dot"></span>Model A</span>
+    <span class="label">AR Ready</span>
+  </div>
+
+  <!-- 3D model viewer -->
+  <model-viewer
+    id="viewer"
+    src="./steamp_updated.glb"
+    ar
+    ar-scale="fixed"
+    camera-controls
+    touch-action="pan-y"
+    alt="Steamp"
+    shadow-intensity="2"
+    skybox-image="./belfast_open_field_1k.hdr"
+    skybox-height="1.7m"
+    autoplay
+    max-camera-orbit="auto 90deg auto"
+    xr-environment>
+    <button slot="ar-button">View in AR</button>
   </model-viewer>
 
+  <!-- Bottom model switcher -->
+  <div class="switcher">
+    <span class="switcher-label">Select Model</span>
+    <div class="switcher-track">
+      <button class="model-btn active" id="btn-a" onclick="switchModel('a')">Model A</button>
+      <button class="model-btn" id="btn-b" onclick="switchModel('b')">Model B</button>
+    </div>
+  </div>
+
   <audio controls autoplay loop>
-  <source src="sound.mp3" type="audio/mpeg">
-  Your browser does not support the audio element.
-</audio>
+    <source src="sound.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    // ── Configure your two models here ──────────────────────────────
+    const MODELS = {
+      a: {
+        src: './steamp_materials_right.glb',
+        label: 'Model A'
+      },
+      b: {
+        src: './steamp_materials_left.glb',   // ← replace with your second .glb filename
+        label: 'Model B'
+      }
+    };
+    // ────────────────────────────────────────────────────────────────
+
+    let current = 'a';
+
+    function switchModel(key) {
+      if (key === current) return;
+
+      const viewer = document.getElementById('viewer');
+      const btnA   = document.getElementById('btn-a');
+      const btnB   = document.getElementById('btn-b');
+      const nameEl = document.getElementById('currentModelName');
+
+      // Mark loading
+      const activeBtn = key === 'a' ? btnA : btnB;
+      activeBtn.classList.add('loading');
+
+      viewer.src = MODELS[key].src;
+      current = key;
+
+      // Update buttons
+      btnA.classList.toggle('active', key === 'a');
+      btnB.classList.toggle('active', key === 'b');
+
+      // Update label
+      nameEl.innerHTML = `<span class="dot"></span>${MODELS[key].label}`;
+
+      // Remove loading state once model loads
+      viewer.addEventListener('load', () => {
+        activeBtn.classList.remove('loading');
+      }, { once: true });
+    }
+  </script>
 </body>
 
 </html>
